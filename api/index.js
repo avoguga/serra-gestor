@@ -96,6 +96,9 @@ app.get("/api/agendas/:id", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 1337;
+
+app.get("/", (req, res) => res.send("Api de eventos!"));
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
