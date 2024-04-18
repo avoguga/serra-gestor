@@ -12,46 +12,46 @@ const db = require("./models");
 
 db.sequelize.sync({ force: true }).then(() => {
   console.log("Drop and re-sync db.");
-  insertTestData(); // Chama a função para inserir dados de teste
+//   insertTestData(); // Chama a função para inserir dados de teste
 });
 
-function insertTestData() {
-  db.eventos
-    .bulkCreate([
-      {
-        Title: "Conferência de Tecnologia",
-        Mes: "Março",
-        DescriptionPT:
-          "Uma conferência sobre as últimas tendências tecnológicas.",
-        DescriptionEN: "A conference about the latest technology trends.",
-        Span: "3 dias",
-        Data: new Date(2023, 2, 15), // 15 de Março de 2023
-      },
-      {
-        Title: "Workshop de Arte",
-        Mes: "Abril",
-        DescriptionPT:
-          "Um workshop interativo sobre técnicas modernas de pintura.",
-        DescriptionEN: "An interactive workshop on modern painting techniques.",
-        Span: "2 dias",
-        Data: new Date(2023, 3, 10), // 10 de Abril de 2023
-      },
-      {
-        Title: "Festival de Música",
-        Mes: "Maio",
-        DescriptionPT: "Festival celebrando diversos gêneros musicais.",
-        DescriptionEN: "Festival celebrating various music genres.",
-        Span: "5 dias",
-        Data: new Date(2023, 4, 20), // 20 de Maio de 2023
-      },
-    ])
-    .then(() => {
-      console.log("Dados de teste inseridos.");
-    })
-    .catch((error) => {
-      console.error("Erro ao inserir dados de teste:", error);
-    });
-}
+// function insertTestData() {
+//   db.eventos
+//     .bulkCreate([
+//       {
+//         Title: "Conferência de Tecnologia",
+//         Mes: "Março",
+//         DescriptionPT:
+//           "Uma conferência sobre as últimas tendências tecnológicas.",
+//         DescriptionEN: "A conference about the latest technology trends.",
+//         Span: "3 dias",
+//         Data: new Date(2023, 2, 15), // 15 de Março de 2023
+//       },
+//       {
+//         Title: "Workshop de Arte",
+//         Mes: "Abril",
+//         DescriptionPT:
+//           "Um workshop interativo sobre técnicas modernas de pintura.",
+//         DescriptionEN: "An interactive workshop on modern painting techniques.",
+//         Span: "2 dias",
+//         Data: new Date(2023, 3, 10), // 10 de Abril de 2023
+//       },
+//       {
+//         Title: "Festival de Música",
+//         Mes: "Maio",
+//         DescriptionPT: "Festival celebrando diversos gêneros musicais.",
+//         DescriptionEN: "Festival celebrating various music genres.",
+//         Span: "5 dias",
+//         Data: new Date(2023, 4, 20), // 20 de Maio de 2023
+//       },
+//     ])
+//     .then(() => {
+//       console.log("Dados de teste inseridos.");
+//     })
+//     .catch((error) => {
+//       console.error("Erro ao inserir dados de teste:", error);
+//     });
+// }
 
 // Endpoint para buscar todos os eventos
 app.get("/api/agendas", async (req, res) => {
