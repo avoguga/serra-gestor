@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/app.js",
-    "deploy:start": "dist/app.min.js",
-    "build": "babel src -d dist && uglifyjs dist/app.js -o dist/app.min.js",
+    "preview": "dist/app.min.js",
+    "build": "babel src -d dist && uglifyjs src/app.js -o dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
