@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adicionar Evento</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #ececec;
+        color: #333;
+      }
+      .container {
+        max-width: 800px;
+        margin: auto;
+        overflow: hidden;
+        padding: 0 20px;
+      }
+      .header,
+      .event-list,
+      .add-event-form {
+        background: #fff;
+        margin: 20px 0;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h1,
+      h2 {
+        color: #5cb85c;
+      }
+      label,
+      input,
+      textarea,
+      button {
+        display: block;
+        width: 98%;
+        margin-bottom: 10px;
+      }
+      select {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input,
+      textarea,
+      button,
+      select {
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+      button {
+        background-color: #5cb85c;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #4cae4c;
+      }
+      .event-item {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        margin-bottom: 5px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .event-actions {
+        text-align: right;
+      }
+      .event-actions button {
+        margin-left: 5px;
+      }
+      #result {
+        text-align: center;
+        font-weight: bold;
+        color: #5cb85c;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+        padding-top: 60px;
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      #confirmDelete {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin-right: 10px;
+      }
+
+      #cancelDelete {
+        background-color: #555;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Gerenciar Eventos</h1>
+      </div>
+      <div class="add-event-form">
+        <h2>Adicionar Evento</h2>
+        <form id="addEventForm">
+          <label for="title">Título:</label>
+          <input type="text" id="title" name="title" required />
+
+          <label for="month">Mês:</label>
+          <select id="month" name="month" required>
+            <option value="">Selecione um mês</option>
+            <option value="Janeiro">Janeiro</option>
+            <option value="Fevereiro">Fevereiro</option>
+            <option value="Março">Março</option>
+            <option value="Abril">Abril</option>
+            <option value="Maio">Maio</option>
+            <option value="Junho">Junho</option>
+            <option value="Julho">Julho</option>
+            <option value="Agosto">Agosto</option>
+            <option value="Setembro">Setembro</option>
+            <option value="Outubro">Outubro</option>
+            <option value="Novembro">Novembro</option>
+            <option value="Dezembro">Dezembro</option>
+          </select>
+
+          <label for="descriptionPT">Descrição PT:</label>
+          <textarea id="descriptionPT" name="descriptionPT"></textarea>
+
+          <label for="spanInput">Título inglês:</label>
+          <input id="spanInput" name="spanInput" />
+
+          <label for="descriptionEN">Descrição EN:</label>
+          <textarea id="descriptionEN" name="descriptionEN"></textarea>
+
+          <label for="date">Data:</label>
+          <input type="datetime-local" id="date" name="date" required />
+
+          <button type="submit">Adicionar Evento</button>
+        </form>
+      </div>
+      <div class="event-list">
+        <h2>Eventos Existentes</h2>
+        <div id="result"></div>
+        <ul id="eventsList"></ul>
+      </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p>Tem certeza de que deseja deletar este evento?</p>
+        <button id="confirmDelete">Deletar</button>
+        <button id="cancelDelete">Cancelar</button>
+      </div>
+    </div>
+
+    <script>
+      const eventsListEl = document.getElementById("eventsList");
+      const form = document.getElementById("addEventForm");
+      const titleInput = document.getElementById("title");
+      const monthSelect = document.getElementById("month");
+      const descriptionPTInput = document.getElementById("descriptionPT");
+      const spanInput = document.getElementById("spanInput");
+      const descriptionENInput = document.getElementById("descriptionEN");
+      const dateInput = document.getElementById("date");
+      const resultElement = document.getElementById("result");
+
+      let editMode = false;
+      let editId = null;
+
+      function resetForm() {
+        form.reset();
+        editMode = false;
+        editId = null;
+      }
+
+      function fillForm(eventData) {
+        titleInput.value = eventData.title;
+        monthSelect.value = eventData.month;
+        descriptionPTInput.value = eventData.descriptionPT;
+        descriptionENInput.value = eventData.descriptionEN;
+        dateInput.value = eventData.date.slice(0, 10); // Assuming 'date' comes in ISO format
+        editId = eventData.id;
+        editMode = true;
+      }
+
+      function deleteEvent(eventId) {
+        fetch(`/api/eventos/${eventId}`, { method: "DELETE" })
+          .then((response) => {
+            if (!response.ok) throw new Error("Falha ao deletar o evento");
+            loadEvents();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            resultElement.textContent = "Erro ao deletar evento.";
+          });
+      }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const dateValue = new Date(dateInput.value).toISOString();
+
+        const formData = {
+          Title: titleInput.value,
+          Mes: monthSelect.value,
+          DescriptionPT: descriptionPTInput.value,
+          DescriptionEN: descriptionENInput.value,
+          Span: spanInput.value,
+          Data: dateValue,
+        };
+
+        const fetchOptions = {
+          method: editMode ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        };
+
+        const endpoint = editMode ? `/api/eventos/${editId}` : "/api/eventos";
+
+        fetch(endpoint, fetchOptions)
+          .then((response) => {
+            if (!response.ok) {
+              // Se a resposta não for OK, pegamos o erro da resposta
+              return response.json().then((data) => Promise.reject(data));
+            }
+            return response.json();
+          })
+          .then((data) => {
+            resultElement.textContent = editMode
+              ? "Evento atualizado com sucesso!"
+              : "Evento adicionado com sucesso!";
+            resetForm();
+            loadEvents();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            resultElement.textContent =
+              "Erro ao salvar evento: " +
+              (error.message || "Erro desconhecido");
+          });
+      });
+
+      function loadEvents() {
+        fetch("/api/eventos")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            eventsListEl.innerHTML = data
+              .map(
+                (evento) =>
+                  `<li>
+                  <p> ${evento.Title} - ${evento.Mes} </p>
+                <button onclick='fillForm(${JSON.stringify(
+                  evento
+                )})'>Editar</button>
+                <button onclick='showDeleteModal("${evento.id}")'>Deletar</button>
+              </li>`
+              )
+              .join("");
+          })
+          .catch((error) => {
+            console.error("Erro ao carregar eventos:", error);
+          });
+      }
+
+      loadEvents();
+
+      const deleteModal = document.getElementById("deleteModal");
+      const span = document.getElementsByClassName("close")[0];
+      const confirmDeleteBtn = document.getElementById("confirmDelete");
+      const cancelDeleteBtn = document.getElementById("cancelDelete");
+
+      // Quando o usuário clica no botão para deletar um evento
+      function showDeleteModal(eventId) {
+        deleteModal.style.display = "block";
+
+        confirmDeleteBtn.onclick = function () {
+          deleteEvent(eventId);
+          deleteModal.style.display = "none";
+        };
+
+        cancelDeleteBtn.onclick = function () {
+          deleteModal.style.display = "none";
+        };
+
+        // Quando o usuário clica em <span> (x), fechamos o modal
+        span.onclick = function () {
+          deleteModal.style.display = "none";
+        };
+
+        // Quando o usuário clica em qualquer lugar fora do modal, ele fecha
+        window.onclick = function (event) {
+          if (event.target === deleteModal) {
+            deleteModal.style.display = "none";
+          }
+        };
+      }
+    </script>
+  </body>
+</html>
