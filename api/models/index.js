@@ -15,6 +15,8 @@ db.sequelize = sequelize;
 
 db.eventos = require("./Evento")(sequelize, Sequelize.DataTypes);
 
+db.users = require("./User")(sequelize, Sequelize.DataTypes);
+
 sequelize
   .authenticate()
   .then(() => {
