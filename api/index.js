@@ -100,7 +100,7 @@ function checkAuthentication(req, res, next) {
 
 // Middleware para proteger a rota do index.html
 app.get("/index.html", checkAuthentication, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 // Rota de login
