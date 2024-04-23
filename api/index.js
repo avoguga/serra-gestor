@@ -16,7 +16,7 @@ app.use(
     saveUninitialized: true,
     cookie: {
       maxAge: 3600000, // 1 hora em milissegundos
-      httpOnly: true,   // Impede o acesso ao cookie via JavaScript no navegador
+      httpOnly: true, // Impede o acesso ao cookie via JavaScript no navegador
       secure: true,
     },
   })
@@ -84,11 +84,9 @@ function checkAuthentication(req, res, next) {
 }
 
 // Middleware para proteger a rota do index.html
-app.use(
-  "/index.html",
-  checkAuthentication,
-  express.static("public/index.html")
-);
+app.get("/index.html", checkAuthentication, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // Rota de login
 app.get("/login", (req, res) => {
