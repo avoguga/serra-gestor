@@ -16,8 +16,8 @@ app.use(
     saveUninitialized: true,
     cookie: {
       maxAge: 3600000, // 1 hora em milissegundos
-      httpOnly: true, // Impede o acesso ao cookie via JavaScript no navegador
-      secure: true,
+      // httpOnly: true, // Impede o acesso ao cookie via JavaScript no navegador
+      // secure: true,
     },
   })
 );
