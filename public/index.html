@@ -29,7 +29,7 @@
       }
       h1,
       h2 {
-        color: #5cb85c;
+        color: #007bff;
       }
       label,
       input,
@@ -53,13 +53,13 @@
         border: 1px solid #ddd;
       }
       button {
-        background-color: #5cb85c;
+        background-color: #007bff;
         color: white;
         border: none;
         cursor: pointer;
       }
       button:hover {
-        background-color: #4cae4c;
+        background-color: #0059b3;
       }
       .event-item {
         background: #f9f9f9;
@@ -77,7 +77,7 @@
       #result {
         text-align: center;
         font-weight: bold;
-        color: #5cb85c;
+        color: #007bff;
       }
 
       .modal {
@@ -123,6 +123,30 @@
         border: none;
         padding: 10px 20px;
         margin-right: 10px;
+      }
+
+      .deleteButton {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin-right: 10px;
+      }
+
+      .deleteButton:hover {
+        background-color: rgb(201, 42, 27);
+      }
+
+      .editButton {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin-right: 10px;
+      }
+
+      .editButton:hover {
+        background-color: #0059b3;
       }
 
       #cancelDelete {
@@ -192,6 +216,48 @@
       </div>
     </div>
 
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>Editar Evento</h2>
+        <form id="editEventForm">
+          <label for="editTitle">Título:</label>
+          <input type="text" id="editTitle" name="title" required />
+
+          <label for="editMonth">Mês:</label>
+          <select id="editMonth" name="month" required>
+            <option value="">Selecione um mês</option>
+            <option value="Janeiro">Janeiro</option>
+            <option value="Fevereiro">Fevereiro</option>
+            <option value="Março">Março</option>
+            <option value="Abril">Abril</option>
+            <option value="Maio">Maio</option>
+            <option value="Junho">Junho</option>
+            <option value="Julho">Julho</option>
+            <option value="Agosto">Agosto</option>
+            <option value="Setembro">Setembro</option>
+            <option value="Outubro">Outubro</option>
+            <option value="Novembro">Novembro</option>
+            <option value="Dezembro">Dezembro</option>
+          </select>
+
+          <label for="editDescriptionPT">Descrição PT:</label>
+          <textarea id="editDescriptionPT" name="descriptionPT"></textarea>
+
+          <label for="editSpanInput">Título inglês:</label>
+          <input type="text" id="editSpanInput" name="spanInput" />
+
+          <label for="editDescriptionEN">Descrição EN:</label>
+          <textarea id="editDescriptionEN" name="descriptionEN"></textarea>
+
+          <label for="editDate">Data:</label>
+          <input type="datetime-local" id="editDate" name="date" required />
+
+          <button type="submit">Salvar Alterações</button>
+        </form>
+      </div>
+    </div>
+
     <script>
       const eventsListEl = document.getElementById("eventsList");
       const form = document.getElementById("addEventForm");
@@ -212,14 +278,97 @@
         editId = null;
       }
 
+      //  Editar
+      function showEditModal(eventData) {
+        document.getElementById("editTitle").value = eventData.Title || "";
+        document.getElementById("editMonth").value = eventData.Mes || "";
+        document.getElementById("editDescriptionPT").value =
+          eventData.DescriptionPT || "";
+        document.getElementById("editSpanInput").value = eventData.Span || "";
+        document.getElementById("editDescriptionEN").value =
+          eventData.DescriptionEN || "";
+        document.getElementById("editDate").value = eventData.Data
+          ? eventData.Data.slice(0, 16)
+          : "";
+
+        editId = eventData.id; // Certifique-se de que o ID está sendo definido aqui
+
+        document.getElementById("editModal").style.display = "block";
+      }
+
+      function updateEvent(data, editId) {
+        const fetchOptions = {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        };
+        fetch(`/api/eventos/${editId}`, fetchOptions)
+          .then((response) => {
+            if (!response.ok) {
+              if (response.status === 404) {
+                // Tratamento específico para quando o evento não é encontrado
+                return response
+                  .json()
+                  .then((data) => Promise.reject(new Error(data.message)));
+              }
+              throw new Error("Falha ao atualizar o evento");
+            }
+            return response.json(); // Somente parseia como JSON se a resposta for OK
+          })
+          .then((updatedEvento) => {
+            resultElement.textContent = "Evento atualizado com sucesso!";
+            console.log("Evento Atualizado:", updatedEvento); // Opcional: para ver os dados atualizados
+            closeEditModal();
+            loadEvents();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            resultElement.textContent =
+              "Erro ao atualizar evento: " + error.message;
+          });
+      }
+
+      document
+        .getElementById("editEventForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const editedData = {
+            Title: document.getElementById("editTitle").value,
+            Mes: document.getElementById("editMonth").value,
+            DescriptionPT: document.getElementById("editDescriptionPT").value,
+            Span: document.getElementById("editSpanInput").value,
+            DescriptionEN: document.getElementById("editDescriptionEN").value,
+            Data: document.getElementById("editDate").value,
+          };
+
+          if (editId) {
+            updateEvent(editedData, editId);
+          } else {
+            console.error("Error: Event ID is not set.");
+            document.getElementById("result").textContent =
+              "Erro: ID do evento não está definido.";
+          }
+        });
+
+      function closeEditModal() {
+        document.getElementById("editModal").style.display = "none";
+      }
+
+      document
+        .getElementById("editEventForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          // Aqui você adicionará o código para salvar as edições
+        });
+
       function fillForm(eventData) {
-        titleInput.value = eventData.title;
-        monthSelect.value = eventData.month;
-        descriptionPTInput.value = eventData.descriptionPT;
-        descriptionENInput.value = eventData.descriptionEN;
-        dateInput.value = eventData.date.slice(0, 10); // Assuming 'date' comes in ISO format
-        editId = eventData.id;
-        editMode = true;
+        if (eventData.date) {
+          dateInput.value = eventData.date.slice(0, 10); // Converte a data apenas se estiver disponível
+        } else {
+          dateInput.value = ""; // Define como vazio ou algum valor padrão
+        }
+        showEditModal(eventData); // Chama para mostrar o modal
       }
 
       function deleteEvent(eventId) {
@@ -283,16 +432,18 @@
         fetch("/api/eventos")
           .then((response) => response.json())
           .then((data) => {
-            console.log(data);
+            // console.log(data); debugar quando quiser
             eventsListEl.innerHTML = data
               .map(
                 (evento) =>
                   `<li>
                   <p> ${evento.Title} - ${evento.Mes} </p>
-                <button onclick='fillForm(${JSON.stringify(
+                <button class='editButton' onclick='fillForm(${JSON.stringify(
                   evento
                 )})'>Editar</button>
-                <button onclick='showDeleteModal("${evento.id}")'>Deletar</button>
+                <button class='deleteButton' onclick='showDeleteModal("${
+                  evento.id
+                }")'>Deletar</button>
               </li>`
               )
               .join("");

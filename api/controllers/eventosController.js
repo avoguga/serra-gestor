@@ -44,12 +44,13 @@ const updateEvento = async (req, res) => {
             where: { id: req.params.id }
         });
         if (updated) {
-            const updatedEvento = await Evento.findByPk(req.params.id);
+            const updatedEvento = await eventos.findByPk(req.params.id);
             res.status(200).send(updatedEvento);
         } else {
             res.status(404).send({ message: 'Evento não encontrado.' });
         }
     } catch (error) {
+        console.log(error);
         res.status(500).send(error);
     }
 };
