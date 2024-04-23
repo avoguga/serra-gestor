@@ -2,25 +2,40 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
-const session = require("express-session");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const path = require("path");
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+
+const options = {
+  host:'sql10.freesqldatabase.com',
+  user:'sql10700101',
+  password: 'a2QQEtNttZ',
+  database:'sql10700101',
+  port: 3306,
+}
+
+const sessionStore = new MySQLStore(options);
+
 
 // Configuração do middleware de sessão
 app.use(
   session({
     secret: "segredo muito secreto",
+    store: sessionStore,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
       maxAge: 3600000, // 1 hora em milissegundos
-      // httpOnly: true, // Impede o acesso ao cookie via JavaScript no navegador
+      httpOnly: true, // Impede o acesso ao cookie via JavaScript no navegador
       // secure: true,
     },
   })
 );
+
+
 
 app.use((req, res, next) => {
   console.log("Body:", req.body);
