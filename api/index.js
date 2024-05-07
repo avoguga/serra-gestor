@@ -1,4 +1,5 @@
 const express = require("express");
+const flash = require('connect-flash');
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
@@ -10,10 +11,10 @@ const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
 
 const options = {
-  host: "sql10.freesqldatabase.com",
-  user: "sql10700101",
-  password: "a2QQEtNttZ",
-  database: "sql10700101",
+  host: "154.127.52.152",
+  user: "avoguga",
+  password: "50737676",
+  database: "nz_serrabarriga",
   port: 3306,
 };
 
@@ -44,6 +45,8 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false })); // Para ler corpos de formulário
 app.use(bodyParser.json());
 
+app.use(flash());
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -58,7 +61,7 @@ passport.use(
           console.log(`Usuário não encontrado: ${username}`);
           return done(null, false, { message: "Usuário não encontrado." });
         }
-        if (!bcrypt.compareSync(password, user.passwordHash)) {
+        if (bcrypt.compareSync(password, user.passwordHash)) {
           console.log(`Senha incorreta para o usuário: ${username}`);
           return done(null, false, { message: "Senha incorreta." });
         }
