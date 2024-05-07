@@ -6,19 +6,18 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const path = require("path");
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
+const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 
 const options = {
-  host:'sql10.freesqldatabase.com',
-  user:'sql10700101',
-  password: 'a2QQEtNttZ',
-  database:'sql10700101',
+  host: "sql10.freesqldatabase.com",
+  user: "sql10700101",
+  password: "a2QQEtNttZ",
+  database: "sql10700101",
   port: 3306,
-}
+};
 
 const sessionStore = new MySQLStore(options);
-
 
 // Configuração do middleware de sessão
 app.use(
@@ -34,8 +33,6 @@ app.use(
     },
   })
 );
-
-
 
 app.use((req, res, next) => {
   console.log("Body:", req.body);
@@ -100,7 +97,8 @@ function checkAuthentication(req, res, next) {
 
 // Middleware para proteger a rota do index.html
 app.get("/index.html", checkAuthentication, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  // res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 // Rota de login
