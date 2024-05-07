@@ -1,10 +1,10 @@
 const Sequelize = require("sequelize");
 const mysql2 = require("mysql2");
 
-const sequelize = new Sequelize("sql10700101", "sql10700101", "a2QQEtNttZ", {
+const sequelize = new Sequelize("nz_serrabarriga", "avoguga", "50737676", {
   dialect: "mysql",
   dialectModule: mysql2,
-  host: "sql10.freesqldatabase.com",
+  host: "154.127.52.152",
   port: 3306,
 });
 
