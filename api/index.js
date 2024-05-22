@@ -145,3 +145,10 @@ const PORT = process.env.PORT || 1337;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+
+
+// predição
+const imagePredictionRoutes = require('./routes/imagePredictionRoutes');
+app.use('/api', imagePredictionRoutes);
