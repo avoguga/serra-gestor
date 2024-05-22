@@ -2,7 +2,6 @@ const multer = require("multer");
 const sharp = require("sharp");
 const path = require("path");
 const tf = require("@tensorflow/tfjs-node");
-const fs = require("fs");  // Import fs module to handle file deletion
 
 const classNames = [
   "Espaço Acotirene",
@@ -24,7 +23,7 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, "../uploads/"));
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // Use current timestamp and file extension
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
@@ -32,7 +31,9 @@ const upload = multer({ storage: storage });
 let model;
 
 async function loadModel() {
-  const modelPath = "file://" + path.join(__dirname, "../assets/symbol-model.json");
+  // Assume que o modelo está na pasta assets, um nível acima de onde está o script atual
+  const modelPath =
+    "file://" + path.join(__dirname, "../assets/symbol-model.json");
   model = await tf.loadLayersModel(modelPath);
 }
 loadModel();
@@ -55,10 +56,13 @@ exports.predictImage = [
         .expandDims();
       const predictions = await model.predict(tensor);
       const probabilities = predictions.dataSync();
-      const highestProbIndex = probabilities.indexOf(Math.max(...probabilities));
+      const highestProbIndex = probabilities.indexOf(
+        Math.max(...probabilities)
+      );
 
       if (probabilities[highestProbIndex] > 0.5) {
-        const className = classNames[highestProbIndex];
+        // Considerar ajustar este limiar conforme necessário
+        const className = classNames[highestProbIndex]; // Usa o índice para buscar o nome
         res.json({ recognized: true, className: className });
       } else {
         res.status(400).json({ error: "Imagem não reconhecida" });
@@ -68,15 +72,6 @@ exports.predictImage = [
       res.status(500).json({
         error: "Erro ao processar a imagem",
         message: error.message,
-      });
-    } finally {
-      // Delete the image file after processing
-      fs.unlink(req.file.path, (err) => {
-        if (err) {
-          console.error("Failed to delete image file:", err);
-        } else {
-          console.log("Successfully deleted image file:", req.file.path);
-        }
       });
     }
   },
