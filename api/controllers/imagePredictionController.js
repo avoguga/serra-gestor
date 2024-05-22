@@ -59,8 +59,9 @@ exports.predictImage = [
       const highestProbIndex = probabilities.indexOf(
         Math.max(...probabilities)
       );
-
-      if (probabilities[highestProbIndex] > 0.5) {
+    console.log("Probabilidades: ", probabilities);
+    console.log(classNames[highestProbIndex])
+      if (probabilities[highestProbIndex] > 0.9) {
         // Considerar ajustar este limiar conforme necessário
         const className = classNames[highestProbIndex]; // Usa o índice para buscar o nome
         res.json({ recognized: true, className: className });
