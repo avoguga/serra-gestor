@@ -1,5 +1,5 @@
 const express = require("express");
-const flash = require('connect-flash');
+const flash = require("connect-flash");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
@@ -36,7 +36,11 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  console.log("Body:", req.body);
+  console.log(
+    `Body: ${req.body}`,
+    `Query: ${req.query}`,
+    `Params: ${req.params}`
+  );
   next();
 });
 
@@ -146,9 +150,6 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-
-
-
 // predição
-const imagePredictionRoutes = require('./routes/imagePredictionRoutes');
-app.use('/api', imagePredictionRoutes);
+const imagePredictionRoutes = require("./routes/imagePredictionRoutes");
+app.use("/api", imagePredictionRoutes);
