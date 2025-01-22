@@ -1,147 +1,106 @@
 const express = require("express");
-const flash = require("connect-flash");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const app = express();
-const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
-const bcrypt = require("bcrypt");
 const path = require("path");
-const session = require("express-session");
-const MySQLStore = require("express-mysql-session")(session);
 
-const options = {
-  host: "154.127.52.152",
-  user: "avoguga",
-  password: "50737676",
-  database: "nz_serrabarriga",
-  port: 3306,
-};
+// Inicia a aplicação Express
+const app = express();
 
-const sessionStore = new MySQLStore(options);
-
-// Configuração do middleware de sessão
-app.use(
-  session({
-    secret: "segredo muito secreto",
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 3600000, // 1 hora em milissegundos
-      httpOnly: true, // Impede o acesso ao cookie via JavaScript no navegador
-      secure: true,
-    },
-  })
-);
-
-app.use((req, res, next) => {
-  console.log(
-    `Body: ${req.body}`,
-    `Query: ${req.query}`,
-    `Params: ${req.params}`
-  );
-  next();
-});
-
-// Configurar middlewares básicos
+// Configurações básicas de middleware
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: false })); // Para ler corpos de formulário
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use(flash());
+// --------------------------------------------------------
+// 1) Credenciais “mockadas” e token fictício
+// --------------------------------------------------------
+const MOCK_USERNAME = "admin";
+const MOCK_PASSWORD = "admin";
+const MOCK_TOKEN = "fake-token-12345";
 
-app.use(passport.initialize());
-app.use(passport.session());
+// --------------------------------------------------------
+// 2) Rota de Login (POST /login)
+//    - Verifica se user/senha == admin/admin
+//    - Retorna JSON com { token } se sucesso
+// --------------------------------------------------------
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  console.log("Tentando login com:", username, password);
 
-// Configuração do Passport para usar estratégia Local
-passport.use(
-  new LocalStrategy((username, password, done) => {
-    const MOCK_USERNAME = "admin";
-    const MOCK_PASSWORD = "admin";
-
-    // Verifica se as credenciais correspondem ao mock
-    if (username === MOCK_USERNAME && password === MOCK_PASSWORD) {
-      // Cria um objeto usuário fictício para propósitos de sessão
-      const user = { id: 1, username: MOCK_USERNAME };
-      console.log(`Usuário autenticado (mock): ${username}`);
-      return done(null, user);
-    } else {
-      console.log(`Falha na autenticação para o usuário: ${username}`);
-      return done(null, false, { message: "Credenciais inválidas." });
-    }
-  })
-);
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser((id, done) => {
-  // Retorna o usuário mockado independentemente do ID  
-  done(null, { id: 1, username: "admin" });
-});
-
-
-// Função para checar se o usuário está autenticado
-function checkAuthentication(req, res, next) {
-  if (req.isAuthenticated()) {
-    // se o usuário está autenticado, continue com a próxima função na cadeia
-    next();
+  if (username === MOCK_USERNAME && password === MOCK_PASSWORD) {
+    // Sucesso: retorna um token fictício
+    return res.json({
+      success: true,
+      token: MOCK_TOKEN,
+      message: "Login efetuado com sucesso!",
+    });
   } else {
-    // se não está autenticado, redirecione para a página de login
-    res.redirect("/login");
+    // Falha: retorna 401 (Unauthorized)
+    return res.status(401).json({
+      success: false,
+      message: "Credenciais inválidas.",
+    });
+  }
+});
+
+// --------------------------------------------------------
+// 3) Middleware para checar token
+//    - Lê cabeçalho Authorization: "Bearer fake-token-12345"
+//    - Se o token não for MOCK_TOKEN, responde 401
+// --------------------------------------------------------
+function checkToken(req, res, next) {
+  const authHeader = req.headers["authorization"] || "";
+  // Exemplo de authHeader: "Bearer fake-token-12345"
+  const [scheme, token] = authHeader.split(" ");
+
+  if (scheme === "Bearer" && token === MOCK_TOKEN) {
+    console.log("Token válido, acesso autorizado.");
+    return next();
+  } else {
+    return res.status(401).json({
+      success: false,
+      message: "Acesso não autorizado. Token inválido ou ausente.",
+    });
   }
 }
 
-// Middleware para proteger a rota do index.html
-app.get("/index.html", checkAuthentication, (req, res) => {
-  // res.sendFile(path.join(__dirname, "public", "index.html"));
+// --------------------------------------------------------
+// 4) Rota protegida (por exemplo, /index.html)
+//    - Para acessar /index.html, o front-end deve enviar o token no cabeçalho
+//      Authorization: Bearer fake-token-12345
+// --------------------------------------------------------
+app.get("/index.html", checkToken, (req, res) => {
+  // Serve o arquivo "index.html" do diretório public
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
-// Rota de login
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "login.html"));
-});
-
-// Endpoint de login
-app.post(
-  "/login",
-  (req, res, next) => {
-    console.log(`Processando login para o usuário: ${req.body.username}`);
-    next();
-  },
-  passport.authenticate("local", {
-    successRedirect: "/index.html",
-    failureRedirect: "/login",
-    failureFlash: true, // Requer 'connect-flash' se você quiser usar mensagens flash
-  })
-);
-
-// Requerir os módulos de rotas
+// --------------------------------------------------------
+// 5) Demais rotas do seu projeto (rotas de eventos, etc.)
+// --------------------------------------------------------
 const eventosRoutes = require("./routes/eventosRoutes");
+app.use("/api", eventosRoutes);
 
+// Rotas de predição (se aplicável)
+const imagePredictionRoutes = require("./routes/imagePredictionRoutes");
+app.use("/api", imagePredictionRoutes);
+
+// --------------------------------------------------------
+// 6) Conexão com banco de dados (se necessário)
+// --------------------------------------------------------
 const db = require("./models");
 db.sequelize.sync().then(() => {
   console.log("Database synced without force.");
-  // Se necessário, chame a função para inserir dados de teste aqui
-  // Mas certifique-se de que a inserção de teste não duplique os dados a cada reinicialização.
 });
-// Usar as rotas de eventos definidas em outro arquivo
-app.use("/api", eventosRoutes);
 
-// Endpoint básico para verificar se a API está funcionando
-// app.get("/", (req, res) => res.send("Api de eventos!"));
-app.get("/", checkAuthentication, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// Rota básica para teste
+app.get("/", (req, res) => {
+  res.send("API de eventos funcionando!");
 });
-// Configurar porta e iniciar o servidor
+
+// --------------------------------------------------------
+// 7) Inicia o servidor
+// --------------------------------------------------------
 const PORT = process.env.PORT || 1337;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-// predição
-const imagePredictionRoutes = require("./routes/imagePredictionRoutes");
-app.use("/api", imagePredictionRoutes);

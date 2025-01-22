@@ -48,7 +48,7 @@
     </style>
   </head>
   <body>
-    <!-- Remova 'action' e 'method' para que o envio seja controlado exclusivamente via JavaScript -->
+    <!-- O formulário não tem action/method para que o envio seja feito via fetch -->
     <form id="loginForm">
       <div>
         <label for="username">Usuário:</label>
@@ -68,45 +68,58 @@
         <button type="submit">Entrar</button>
       </div>
     </form>
-    
+
     <script>
       const form = document.getElementById("loginForm");
 
-      // Removemos onsubmit do HTML e adicionamos um listener no JavaScript
-      form.addEventListener("submit", async function (event) {
-        event.preventDefault(); // Evita o reload da página
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Evita recarregar a página
 
-        // Faz a validação simples antes de enviar
         const username = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value.trim();
-        
+
         if (!username || !password) {
           alert("Por favor, preencha todos os campos.");
           return;
         }
 
         try {
-          // Chamada AJAX via fetch
           const response = await fetch("/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
           });
 
-          // Se o servidor redirecionar, você consegue detectar via response.redirected
-          if (response.redirected) {
-            // Redireciona o usuário para a nova URL
-            window.location.href = response.url;
-          } else {
-            // Caso não haja redirecionamento, pegue a resposta do servidor (texto ou JSON)
-            // Obs.: depende de como o backend responde em caso de falha
-            const data = await response.text();
-            console.log("Resposta do servidor:", data);
-            alert("Resposta do servidor: " + data);
+          if (!response.ok) {
+            // Se deu erro (por exemplo, 401)
+            const errorData = await response.json();
+            alert("Falha no login: " + errorData.message);
+            return;
           }
-        } catch (err) {
-          console.error("Erro ao fazer login:", err);
-          alert("Ocorreu um erro ao tentar login. Verifique o console.");
+
+          // Se tudo certo, pegamos o token
+          const data = await response.json();
+          console.log("Login bem-sucedido:", data);
+
+          // Salva o token no localStorage
+          localStorage.setItem("token", data.token);
+
+          alert("Login efetuado com sucesso!");
+
+          // Agora, se quiser acessar /index.html protegido por token,
+          // precisamos fazer outro fetch com cabeçalho Authorization
+          // ou simplesmente navegar para alguma página e, lá dentro,
+          // sempre incluir token nas requisições.
+
+          // Exemplo: redirecionar para /index.html sem AJAX:
+          // (Mas lembre-se: /index.html exigirá header Authorization via checkToken
+          //  se for baixado diretamente pelo navegador, ele não enviará o token.
+          //  Então normalmente esta rota /index.html serviria apenas um front-end
+          //  que também faça fetch nas APIs com token.)
+          window.location.href = "/index.html";
+        } catch (error) {
+          console.error("Erro ao tentar login:", error);
+          alert("Ocorreu um erro no login. Verifique o console.");
         }
       });
     </script>
