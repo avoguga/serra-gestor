@@ -57,39 +57,31 @@ app.use(passport.session());
 // Configuração do Passport para usar estratégia Local
 passport.use(
   new LocalStrategy((username, password, done) => {
-    console.log(`Tentativa de login com o usuário: ${username}`);
-    db.users
-      .findOne({ where: { username: username } })
-      .then((user) => {
-        if (!user) {
-          console.log(`Usuário não encontrado: ${username}`);
-          return done(null, false, { message: "Usuário não encontrado." });
-        }
-        if (bcrypt.compareSync(password, user.passwordHash)) {
-          console.log(`Senha incorreta para o usuário: ${username}`);
-          return done(null, false, { message: "Senha incorreta." });
-        }
-        console.log(`Usuário autenticado: ${username}`);
-        return done(null, user);
-      })
-      .catch((err) => {
-        console.error("Erro na autenticação", err);
-        done(err);
-      });
+    const MOCK_USERNAME = "admin";
+    const MOCK_PASSWORD = "admin";
+
+    // Verifica se as credenciais correspondem ao mock
+    if (username === MOCK_USERNAME && password === MOCK_PASSWORD) {
+      // Cria um objeto usuário fictício para propósitos de sessão
+      const user = { id: 1, username: MOCK_USERNAME };
+      console.log(`Usuário autenticado (mock): ${username}`);
+      return done(null, user);
+    } else {
+      console.log(`Falha na autenticação para o usuário: ${username}`);
+      return done(null, false, { message: "Credenciais inválidas." });
+    }
   })
 );
+
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
 passport.deserializeUser((id, done) => {
-  db.users
-    .findByPk(id)
-    .then((user) => {
-      done(null, user);
-    })
-    .catch((err) => done(err));
+  // Retorna o usuário mockado independentemente do ID  
+  done(null, { id: 1, username: "admin" });
 });
+
 
 // Função para checar se o usuário está autenticado
 function checkAuthentication(req, res, next) {
