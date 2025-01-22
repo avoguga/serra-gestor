@@ -1,3 +1,10 @@
+/**************************************************
+ * index.js - Exemplo de login mockado com token
+ * Usuário e senha fixos: admin / admin
+ * Após login bem-sucedido, devolve token "fake-token-12345"
+ * O front-end guarda este token no localStorage
+ **************************************************/
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -6,36 +13,32 @@ const path = require("path");
 // Inicia a aplicação Express
 const app = express();
 
-// Configurações básicas de middleware
+// Middlewares básicos
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// --------------------------------------------------------
-// 1) Credenciais “mockadas” e token fictício
-// --------------------------------------------------------
+// ------------------------------------------------------
+// 1) Login “mockado” (admin / admin) e token fictício
+// ------------------------------------------------------
 const MOCK_USERNAME = "admin";
 const MOCK_PASSWORD = "admin";
 const MOCK_TOKEN = "fake-token-12345";
 
-// --------------------------------------------------------
-// 2) Rota de Login (POST /login)
-//    - Verifica se user/senha == admin/admin
-//    - Retorna JSON com { token } se sucesso
-// --------------------------------------------------------
+// POST /login - Verifica credenciais e retorna token se sucesso
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   console.log("Tentando login com:", username, password);
 
   if (username === MOCK_USERNAME && password === MOCK_PASSWORD) {
-    // Sucesso: retorna um token fictício
+    // Retorna JSON com token
     return res.json({
       success: true,
       token: MOCK_TOKEN,
       message: "Login efetuado com sucesso!",
     });
   } else {
-    // Falha: retorna 401 (Unauthorized)
+    // Se as credenciais forem inválidas, retorna 401
     return res.status(401).json({
       success: false,
       message: "Credenciais inválidas.",
@@ -43,14 +46,16 @@ app.post("/login", (req, res) => {
   }
 });
 
-// --------------------------------------------------------
-// 3) Middleware para checar token
-//    - Lê cabeçalho Authorization: "Bearer fake-token-12345"
-//    - Se o token não for MOCK_TOKEN, responde 401
-// --------------------------------------------------------
+// ------------------------------------------------------
+// 2) Middleware de verificação de token (checkToken)
+// ------------------------------------------------------
 function checkToken(req, res, next) {
+  /**
+   * Esperamos receber no cabeçalho:
+   *  Authorization: Bearer fake-token-12345
+   */
   const authHeader = req.headers["authorization"] || "";
-  // Exemplo de authHeader: "Bearer fake-token-12345"
+  // Ex.: "Bearer fake-token-12345"
   const [scheme, token] = authHeader.split(" ");
 
   if (scheme === "Bearer" && token === MOCK_TOKEN) {
@@ -64,42 +69,50 @@ function checkToken(req, res, next) {
   }
 }
 
-// --------------------------------------------------------
-// 4) Rota protegida (por exemplo, /index.html)
-//    - Para acessar /index.html, o front-end deve enviar o token no cabeçalho
-//      Authorization: Bearer fake-token-12345
-// --------------------------------------------------------
-app.get("/index.html", checkToken, (req, res) => {
-  // Serve o arquivo "index.html" do diretório public
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+// ------------------------------------------------------
+// 3) Servir páginas estáticas de /public
+//    Assim podemos acessar /login.html, /index.html etc.
+// ------------------------------------------------------
+app.use(express.static(path.join(__dirname, "../public")));
+
+// Rota GET /login (opcional) - se quiser digitar /login no navegador
+// e servir exatamente o "login.html" do public
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "login.html"));
 });
 
-// --------------------------------------------------------
-// 5) Demais rotas do seu projeto (rotas de eventos, etc.)
-// --------------------------------------------------------
-const eventosRoutes = require("./routes/eventosRoutes");
-app.use("/api", eventosRoutes);
+// Rota protegida de exemplo (GET /index.html)
+// Exige que o cliente envie o token correto no cabeçalho "Authorization"
+app.get("/index.html", checkToken, (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "index.html"));
+});
 
-// Rotas de predição (se aplicável)
+// ------------------------------------------------------
+// 4) Rotas da sua aplicação (eventos, etc.)
+// ------------------------------------------------------
+const eventosRoutes = require("./routes/eventosRoutes");
 const imagePredictionRoutes = require("./routes/imagePredictionRoutes");
+
+// Usa as rotas definidas
+app.use("/api", eventosRoutes);
 app.use("/api", imagePredictionRoutes);
 
-// --------------------------------------------------------
-// 6) Conexão com banco de dados (se necessário)
-// --------------------------------------------------------
+// ------------------------------------------------------
+// 5) Conexão com DB (caso deseje manter)
+// ------------------------------------------------------
 const db = require("./models");
 db.sequelize.sync().then(() => {
   console.log("Database synced without force.");
 });
 
-// Rota básica para teste
+// Rota básica de teste
 app.get("/", (req, res) => {
   res.send("API de eventos funcionando!");
 });
 
-// --------------------------------------------------------
-// 7) Inicia o servidor
-// --------------------------------------------------------
+// ------------------------------------------------------
+// 6) Inicia o servidor
+// ------------------------------------------------------
 const PORT = process.env.PORT || 1337;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
